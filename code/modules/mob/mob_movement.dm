@@ -13,6 +13,27 @@
 	return (!mover.density || !density || lying)
 
 
+//The byond version of these verbs wait for the next tick before acting.
+//	instant verbs however can run mid tick or even during the time between ticks.
+/client/verb/moveup()
+	set name = ".moveup"
+	set instant = 1
+	Move(get_step(mob, NORTH), NORTH)
+
+/client/verb/movedown()
+	set name = ".movedown"
+	set instant = 1
+	Move(get_step(mob, SOUTH), SOUTH)
+
+/client/verb/moveright()
+	set name = ".moveright"
+	set instant = 1
+	Move(get_step(mob, EAST), EAST)
+
+/client/verb/moveleft()
+	set name = ".moveleft"
+	set instant = 1
+	Move(get_step(mob, WEST), WEST)
 
 /client/Northeast()
 	swap_hand()
@@ -38,6 +59,7 @@
 		usr << "<span class='warning'>You have nothing to drop in your hand!</span>"
 		return
 	usr.drop_item()
+
 
 //This gets called when you press the delete button.
 /client/verb/delete_key_pressed()
@@ -88,16 +110,17 @@
 			mob.control_object.loc = get_step(mob.control_object,direct)
 	return
 
-
+/atom/movable/var/glide_timer
 /client/Move(n, direct)
+	if(world.time < move_delay)
+		return 0
+	move_delay = world.time+world.tick_lag //this is here because Move() can now be called mutiple times per tick
 	if(!mob || !mob.loc)
 		return 0
 	if(mob.notransform)
-		return 0	//This is sota the goto stop mobs from moving var
+		return 0	//This is sorta the goto stop mobs from moving var
 	if(mob.control_object)
 		return Move_object(direct)
-	if(world.time < move_delay)
-		return 0
 	if(!isliving(mob))
 		return mob.Move(n,direct)
 	if(mob.stat == DEAD)
@@ -134,9 +157,17 @@
 		return 0
 
 	//We are now going to move
+	if (mob.glide_timer)
+		deltimer(mob.glide_timer)
 	moving = 1
-	move_delay = mob.movement_delay() + world.time
 
+	var/delay = mob.movement_delay()
+	move_delay = delay + world.time
+
+	mob.glide_size = world.icon_size/(delay/world.tick_lag)
+	mob.animate_movement = 2
+	debug_usr("MOVING: [world.time] ||| [world.timeofday] ||| [world.icon_size]/([delay]/[world.tick_lag]) = [mob.glide_size] ||| [world.tick_lag]")
+	mob.glide_timer = addtimer(mob, "reset_glide", delay*1.5)
 	if(mob.confused)
 		if(mob.confused > 40)
 			step(mob, pick(cardinal))
@@ -153,8 +184,9 @@
 	if(mob && .)
 		mob.throwing = 0
 
-	return .
-
+/atom/movable/proc/reset_glide()
+	glide_size = 0
+	animate_movement = 2
 
 ///Process_Grab()
 ///Called by client/Move()

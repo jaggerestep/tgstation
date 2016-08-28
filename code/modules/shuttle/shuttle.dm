@@ -194,8 +194,8 @@
 	var/last_timer_length
 
 	var/mode = SHUTTLE_IDLE			//current shuttle mode
-	var/callTime = 50				//time spent in transit (deciseconds)
-	var/ignitionTime = 10			// time spent "starting the engines"
+	var/callTime = 100				//time spent in transit (deciseconds). Should not be lower then 10 seconds without editing the animation of the hyperspace ripples.
+	var/ignitionTime = 55			// time spent "starting the engines". Also rate limits how often we try to reserve transit space if its ever full of transiting shuttles.
 	var/roundstart_move				//id of port to send shuttle to at roundstart
 
 	// The direction the shuttle prefers to travel in
@@ -546,6 +546,8 @@
 						M.ex_act(2)
 
 			else //non-living mobs shouldn't be affected by shuttles, which is why this is an else
+				if(istype(AM, /obj/singularity) && !istype(AM, /obj/singularity/narsie)) //it's a singularity but not a god, ignore it.
+					continue
 				if(!AM.anchored)
 					step(AM, dir)
 				else

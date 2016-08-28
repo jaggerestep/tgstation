@@ -162,12 +162,6 @@
 		if(100 to 200)
 			msg += "<span class='warning'>[t_He] [t_is] twitching ever so slightly.</span>\n"
 
-	if(gender_ambiguous) //someone fucked up a gender reassignment surgery
-		if (gender == MALE)
-			msg += "[t_He] has a strange feminine quality to [t_him].\n"
-		else
-			msg += "[t_He] has a strange masculine quality to [t_him].\n"
-
 	var/appears_dead = 0
 	if(stat == DEAD || (status_flags & FAKEDEATH))
 		appears_dead = 1
@@ -203,11 +197,18 @@
 		for(var/obj/item/I in BP.embedded_objects)
 			msg += "<B>[t_He] [t_has] \a \icon[I] [I] embedded in [t_his] [BP.name]!</B>\n"
 
+	//stores how many left limbs are missing
+	var/l_limbs_missing = 0
 	for(var/t in missing)
 		if(t=="head")
 			msg += "<span class='deadsay'><B>[capitalize(t_his)] [parse_zone(t)] is missing!</B><span class='warning'>\n"
 			continue
+		if(t == "l_arm" || t == "l_leg")
+			l_limbs_missing++
 		msg += "<B>[capitalize(t_his)] [parse_zone(t)] is missing!</B>\n"
+
+	if(l_limbs_missing >= 2)
+		msg += "[t_He] looks all right now.\n"
 
 	if(temp)
 		if(temp < 30)
@@ -261,8 +262,10 @@
 	if(reagents.has_reagent("teslium"))
 		msg += "[t_He] is emitting a gentle blue glow!\n"
 
-	if(stun_absorption)
-		msg += "[t_He] is radiating with a soft yellow light!\n" //Used by Vanguard
+	if(islist(stun_absorption))
+		for(var/i in stun_absorption)
+			if(stun_absorption[i]["end_time"] > world.time && stun_absorption[i]["examine_message"])
+				msg += "[t_He][stun_absorption[i]["examine_message"]]\n"
 
 	if(drunkenness && !skipface && stat != DEAD) //Drunkenness
 		switch(drunkenness)
@@ -343,7 +346,6 @@
 						msg += "<a href='?src=\ref[src];hud=s;add_crime=1'>\[Add crime\]</a> "
 						msg += "<a href='?src=\ref[src];hud=s;view_comment=1'>\[View comment log\]</a> "
 						msg += "<a href='?src=\ref[src];hud=s;add_comment=1'>\[Add comment\]</a>\n"
-
 	msg += "*---------*</span>"
 
 	user << msg

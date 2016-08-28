@@ -47,7 +47,7 @@
 		if(16)
 			new /obj/item/weapon/guardiancreator(src)
 		if(17)
-			new /obj/item/stack/sheet/runed_metal/fifty(src)
+			new /obj/item/borg/upgrade/modkit/aoe/mobs(src)
 		if(18)
 			new /obj/item/device/warp_cube/red(src)
 		if(19)
@@ -212,7 +212,11 @@
 	desc = "A dread talisman that can render you completely invulnerable."
 	icon = 'icons/obj/lavaland/artefacts.dmi'
 	icon_state = "talisman"
+	actions_types = list(/datum/action/item_action/immortality)
 	var/cooldown = 0
+
+/datum/action/item_action/immortality
+	name = "Immortality"
 
 /obj/item/device/immortality_talisman/Destroy(force)
 	if(force)
@@ -469,7 +473,7 @@
 		if(2)
 			new /obj/item/weapon/lava_staff(src)
 		if(3)
-			new /obj/item/weapon/spellbook/oneuse/fireball(src)
+			new /obj/item/weapon/spellbook/oneuse/sacredflame(src)
 			new /obj/item/weapon/gun/magic/wand/fireball(src)
 		if(4)
 			new /obj/item/weapon/dragons_blood(src)
@@ -573,7 +577,10 @@
 
 	switch(random)
 		if(1)
-			user << "<span class='danger'>Other than tasting terrible, nothing really happens.</span>"
+			user << "<span class='danger'>Your appearence morphs to that of a very small humanoid ash dragon! You get to look like a freak without the cool abilities.</span>"
+			H.dna.features = list("mcolor" = "A02720", "tail_lizard" = "Dark Tiger", "tail_human" = "None", "snout" = "Sharp", "horns" = "Curled", "ears" = "None", "wings" = "None", "frills" = "None", "spines" = "Long", "body_markings" = "Dark Tiger Body")
+			H.eye_color = "fee5a3"
+			H.set_species(/datum/species/lizard)
 		if(2)
 			user << "<span class='danger'>Your flesh begins to melt! Miraculously, you seem fine otherwise.</span>"
 			H.set_species(/datum/species/skeleton)
@@ -621,6 +628,9 @@
 	burn_state = LAVA_PROOF
 	hitsound = 'sound/weapons/sear.ogg'
 	var/turf_type = /turf/open/floor/plating/lava/smooth
+	var/transform_string = "lava"
+	var/reset_turf_type = /turf/open/floor/plating/asteroid/basalt
+	var/reset_string = "basalt"
 	var/cooldown = 200
 	var/timer = 0
 	var/banned_turfs
@@ -638,13 +648,18 @@
 		return
 
 	if(target in view(user.client.view, get_turf(user)))
-		var/turf/T = get_turf(target)
-		message_admins("[key_name_admin(user)] fired the lava staff at (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[T.x];Y=[T.y];Z=[T.z]'>[get_area(target)] ([T.x], [T.y], [T.z])</a>).")
-		log_game("[key_name(user)] fired the lava staff at [get_area(target)] ([T.x], [T.y], [T.z]).")
 
-		var/turf/open/O = target
-		user.visible_message("<span class='danger'>[user] turns \the [O] into lava!</span>")
-		O.ChangeTurf(turf_type)
+		var/turf/open/T = get_turf(target)
+		if(!istype(T))
+			return
+		if(!istype(T, turf_type))
+			user.visible_message("<span class='danger'>[user] turns \the [T] into [transform_string]!</span>")
+			message_admins("[key_name_admin(user)] fired the lava staff at (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[T.x];Y=[T.y];Z=[T.z]'>[get_area(target)] ([T.x], [T.y], [T.z])</a>).")
+			log_game("[key_name(user)] fired the lava staff at [get_area(target)] ([T.x], [T.y], [T.z]).")
+			T.ChangeTurf(turf_type)
+		else
+			user.visible_message("<span class='danger'>[user] turns \the [T] into [reset_string]!</span>")
+			T.ChangeTurf(reset_turf_type)
 		playsound(get_turf(src),'sound/magic/Fireball.ogg', 200, 1)
 		timer = world.time + cooldown
 
@@ -670,7 +685,7 @@
 
 /obj/structure/closet/crate/necropolis/bubblegum/New()
 	..()
-	var/loot = rand(1,3)
+	var/loot = rand(1,4)
 	switch(loot)
 		if(1)
 			new /obj/item/weapon/antag_spawner/slaughter_demon(src)
@@ -678,6 +693,8 @@
 			new /obj/item/mayhem(src)
 		if(3)
 			new /obj/item/blood_contract(src)
+		if(4)
+			new /obj/item/weapon/gun/magic/staff/spellblade(src)
 
 /obj/item/blood_contract
 	name = "blood contract"
@@ -691,7 +708,7 @@
 	if(used)
 		return
 	used = TRUE
-	var/choice = input(user,"Who do you want dead?","Pick Reinforcement") as null|anything in player_list
+	var/choice = input(user,"Who do you want dead?","Choose Your Victim") as null|anything in player_list
 
 	if(!(isliving(choice)))
 		user << "[choice] is already dead!"

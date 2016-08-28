@@ -9,7 +9,7 @@
 var/list/spells = typesof(/obj/effect/proc_holder/spell) //needed for the badmin verb for now
 
 /obj/effect/proc_holder/proc/InterceptClickOn(mob/living/user, params, atom/A)
-	if(user.ranged_ability && user.ranged_ability != src)
+	if(user.ranged_ability != src)
 		user << "<span class='warning'><b>[user.ranged_ability.name]</b> has been disabled."
 		user.ranged_ability.remove_ranged_ability(user)
 		return TRUE //TRUE for failed, FALSE for passed.
@@ -31,7 +31,7 @@ var/list/spells = typesof(/obj/effect/proc_holder/spell) //needed for the badmin
 	update_icon()
 
 /obj/effect/proc_holder/proc/remove_ranged_ability(mob/living/user, var/msg)
-	if(!user || !user.client ||user.ranged_ability != src) //To avoid removing the wrong ability
+	if(!user || !user.client || (user.ranged_ability && user.ranged_ability != src)) //To avoid removing the wrong ability
 		return
 	user.ranged_ability = null
 	user.client.click_intercept = null
@@ -138,14 +138,22 @@ var/list/spells = typesof(/obj/effect/proc_holder/spell) //needed for the badmin
 			user << "<span class='notice'>You can't get the words out!</span>"
 			return 0
 
+		var/list/casting_clothes = typecacheof(list(/obj/item/clothing/suit/wizrobe,
+		/obj/item/clothing/suit/space/hardsuit/wizard,
+		/obj/item/clothing/shoes/sandal,
+		/obj/item/clothing/head/wizard,
+		/obj/item/clothing/head/helmet/space/hardsuit/wizard,
+		/obj/item/clothing/suit/space/hardsuit/shielded/wizard,
+		/obj/item/clothing/head/helmet/space/hardsuit/shielded/wizard))
+
 		if(clothes_req) //clothes check
-			if(!istype(H.wear_suit, /obj/item/clothing/suit/wizrobe) && !istype(H.wear_suit, /obj/item/clothing/suit/space/hardsuit/wizard))
+			if(!is_type_in_typecache(H.wear_suit, casting_clothes))
 				H << "<span class='notice'>I don't feel strong enough without my robe.</span>"
 				return 0
-			if(!istype(H.shoes, /obj/item/clothing/shoes/sandal))
+			if(!is_type_in_typecache(H.shoes, casting_clothes))
 				H << "<span class='notice'>I don't feel strong enough without my sandals.</span>"
 				return 0
-			if(!istype(H.head, /obj/item/clothing/head/wizard) && !istype(H.head, /obj/item/clothing/head/helmet/space/hardsuit/wizard))
+			if(!is_type_in_typecache(H.head, casting_clothes))
 				H << "<span class='notice'>I don't feel strong enough without my hat.</span>"
 				return 0
 		if(cult_req) //CULT_REQ CLOTHES CHECK

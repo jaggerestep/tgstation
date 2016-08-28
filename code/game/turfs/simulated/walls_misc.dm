@@ -45,6 +45,7 @@
 	desc = "A huge chunk of warm metal. The clanging of machinery emanates from within."
 	explosion_block = 2
 	var/obj/effect/clockwork/overlay/wall/realappearence
+	var/obj/structure/clockwork/cache/linkedcache
 
 /turf/closed/wall/clockwork/New()
 	..()
@@ -53,6 +54,11 @@
 	realappearence = PoolOrNew(/obj/effect/clockwork/overlay/wall, src)
 	realappearence.linked = src
 	change_construction_value(5)
+
+/turf/closed/wall/clockwork/examine(mob/user)
+	..()
+	if((is_servant_of_ratvar(user) || isobserver(user)) && linkedcache)
+		user << "<span class='brass'>It is linked, generating components in a cache!</span>"
 
 /turf/closed/wall/clockwork/Destroy()
 	be_removed()
@@ -64,6 +70,9 @@
 	return ..()
 
 /turf/closed/wall/clockwork/proc/be_removed()
+	if(linkedcache)
+		linkedcache.linkedwall = null
+		linkedcache = null
 	change_construction_value(-5)
 	qdel(realappearence)
 	realappearence = null
@@ -85,7 +94,8 @@
 	return ..()
 
 /turf/closed/wall/clockwork/ratvar_act()
-	return 0
+	for(var/mob/M in src)
+		M.ratvar_act()
 
 /turf/closed/wall/clockwork/narsie_act()
 	..()
@@ -160,11 +170,17 @@
 	walltype = "shuttle"
 	smooth = SMOOTH_FALSE
 
+/turf/closed/wall/shuttle/syndie
+	icon_state = "wall3"
+	walltype = "syndieshuttle"
+	sheet_type = /obj/item/stack/sheet/mineral/plastitanium
+
 /turf/closed/wall/shuttle/smooth
 	name = "wall"
 	icon = 'icons/turf/walls/shuttle_wall.dmi'
 	icon_state = "shuttle"
 	walltype = "shuttle"
+	sheet_type = /obj/item/stack/sheet/mineral/titanium
 	smooth = SMOOTH_MORE|SMOOTH_DIAGONAL
 	canSmoothWith = list(/turf/closed/wall/shuttle/smooth, /obj/structure/window/shuttle, /obj/structure/shuttle, /obj/machinery/door/airlock/glass, /obj/machinery/door/airlock/shuttle)
 
@@ -198,11 +214,3 @@
 	. = ..()
 	T.transform = transform
 
-
-//why don't shuttle walls habe smoothwall? now i gotta do rotation the dirty way <- DOUBLE GOOFBALL FOR NOT CALLING PARENT
-/turf/closed/wall/shuttle/shuttleRotate(rotation)
-	if(smooth)
-		return ..()
-	var/matrix/M = transform
-	M.Turn(rotation)
-	transform = M
