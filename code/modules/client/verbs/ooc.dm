@@ -51,12 +51,14 @@
 			return
 
 	log_ooc("[mob.name]/[key] : [raw_msg]")
-
+	usr.texttospeech(raw_msg, ckey)
 	var/keyname = key
 	if(prefs.unlock_content)
 		if(prefs.toggles & MEMBER_PUBLIC)
 			keyname = "<font color='[prefs.ooccolor ? prefs.ooccolor : normal_ooc_colour]'><img style='width:9px;height:9px;' class=icon src=\ref['icons/member_content.dmi'] iconstate=blag>[keyname]</font>"
-
+	spawn(10)
+		if(fexists("sound/playervoices/[ckey].wav"))
+			playsound_global("sound/playervoices/[ckey].wav", repeat=0, channel=1, volume=100)
 	for(var/client/C in clients)
 		if(C.prefs.chat_toggles & CHAT_OOC)
 			if(holder)
